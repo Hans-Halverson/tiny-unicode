@@ -22,4 +22,4 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run tests
-"$BUILD_DIR"/tests "$ROOT_DIR"/test/all-code-points/all-code-points.txt
+"$BUILD_DIR"/tests "$ROOT_DIR"/test/all-utf-8.txt

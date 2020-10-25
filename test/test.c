@@ -46,7 +46,7 @@ void test_utf8_encode_all(char *code_points_file) {
   codepoint_t codepoints[0x110000];
   UnicodeString_t unicode_string = { 0, codepoints };
   for (codepoint_t i = 0; i < 0x110000; i++) {
-    if (IN_SURROGATE_RANGE(i) || IS_NON_CHARACTER(i)) {
+    if (IN_SURROGATE_RANGE(i)) {
       continue;
     }
 
@@ -82,7 +82,7 @@ void test_utf8_decode_all(char *code_points_file) {
 
   size_t i = 0;
   for (codepoint_t codepoint = 1; codepoint <= 0x10FFFF; codepoint++) {
-    if (IN_SURROGATE_RANGE(codepoint) || IS_NON_CHARACTER(codepoint)) {
+    if (IN_SURROGATE_RANGE(codepoint)) {
       continue;
     }
 
