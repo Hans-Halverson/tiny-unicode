@@ -1,0 +1,27 @@
+#pragma once
+
+#include <stdint.h>
+
+typedef uint32_t codepoint_t;
+
+#define IN_SURROGATE_RANGE(CODEPOINT) ((CODEPOINT) >= 0xD800 && (CODEPOINT) <= 0xDFFF)
+
+#define IS_NON_CHARACTER(CODEPOINT) \
+  (((CODEPOINT) >= 0xFDD0) && ((CODEPOINT) <= 0xFDEF) || \
+  (CODEPOINT) == 0xFFFE || (CODEPOINT) == 0xFFFF || \
+  (CODEPOINT) == 0x1FFFE || (CODEPOINT) == 0x1FFFF || \
+  (CODEPOINT) == 0x2FFFE || (CODEPOINT) == 0x2FFFF || \
+  (CODEPOINT) == 0x3FFFE || (CODEPOINT) == 0x3FFFF || \
+  (CODEPOINT) == 0x4FFFE || (CODEPOINT) == 0x4FFFF || \
+  (CODEPOINT) == 0x5FFFE || (CODEPOINT) == 0x5FFFF || \
+  (CODEPOINT) == 0x6FFFE || (CODEPOINT) == 0x6FFFF || \
+  (CODEPOINT) == 0x7FFFE || (CODEPOINT) == 0x7FFFF || \
+  (CODEPOINT) == 0x8FFFE || (CODEPOINT) == 0x8FFFF || \
+  (CODEPOINT) == 0x9FFFE || (CODEPOINT) == 0x9FFFF || \
+  (CODEPOINT) == 0xAFFFE || (CODEPOINT) == 0xAFFFF || \
+  (CODEPOINT) == 0xBFFFE || (CODEPOINT) == 0xBFFFF || \
+  (CODEPOINT) == 0xCFFFE || (CODEPOINT) == 0xCFFFF || \
+  (CODEPOINT) == 0xDFFFE || (CODEPOINT) == 0xDFFFF || \
+  (CODEPOINT) == 0xEFFFE || (CODEPOINT) == 0xEFFFF || \
+  (CODEPOINT) == 0xFFFFE || (CODEPOINT) == 0xFFFFF || \
+  (CODEPOINT) == 0x10FFFE || (CODEPOINT) == 0x10FFFF)

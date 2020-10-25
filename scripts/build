@@ -1,0 +1,49 @@
+#!/bin/zsh
+
+CURRENT_DIR=$0:A:h
+ROOT_DIR=$(dirname $CURRENT_DIR)
+BUILD_DIR="$ROOT_DIR"/builds
+
+if [[ "$1" == "prod" ]]; then
+  MODE_OPTS="-O3"
+elif [[ "$1" == "asan-ubsan" ]]; then
+  FILENAME_SUFFIX="-asan-ubsan"
+  MODE_OPTS="-g -fsanitize=address,undefined"
+elif [[ "$1" == "debug" ]]; then
+  FILENAME_SUFFIX="-debug"
+  MODE_OPTS="-g"
+else
+  echo "Error: Unknown build mode \"$1\""
+  exit 1
+fi
+
+# rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
+
+# Build library object files
+SUCCESS=true
+for file in "$ROOT_DIR"/src/*.c; do
+  # Determine filename without path or extension
+  NAME=$(basename "$file")
+  NAME="${NAME%.*}"
+
+  # Compile individual file
+  clang -c -Wall -Wextra \
+    -o "$BUILD_DIR/$NAME$FILENAME_SUFFIX.o" \
+    -I"$ROOT_DIR"/src/includes \
+    ${=MODE_OPTS} \
+    "$file"
+  if [ $? -ne 0 ]; then
+    SUCCESS=false
+  fi
+done
+
+if [[ "$SUCCESS" = false ]]; then
+  exit 1;
+fi
+
+# Build library archive
+ar rcs "$BUILD_DIR/libtinyunicode$FILENAME_SUFFIX.a" "$BUILD_DIR"/*"$FILENAME_SUFFIX.o"
+if [ $? -ne 0 ]; then
+  exit 1;
+fi

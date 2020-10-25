@@ -1,0 +1,25 @@
+#!/bin/zsh
+
+CURRENT_DIR=$0:A:h
+ROOT_DIR=$(dirname $CURRENT_DIR)
+BUILD_DIR="$ROOT_DIR"/builds
+
+# Build library
+"$ROOT_DIR"/scripts/build asan-ubsan
+if [ $? -ne 0 ]; then
+  exit 1;
+fi
+
+# Build test suite
+clang -Wall -Wextra \
+  -o "$BUILD_DIR"/tests \
+  -I"$ROOT_DIR"/src/includes \
+  -L"$BUILD_DIR" -ltinyunicode-asan-ubsan \
+  -g -fsanitize=address,undefined \
+  "$ROOT_DIR"/test/test.c
+if [ $? -ne 0 ]; then
+  exit 1;
+fi
+
+# Run tests
+"$BUILD_DIR"/tests "$ROOT_DIR"/test/all-code-points/all-code-points.txt
