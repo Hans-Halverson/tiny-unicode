@@ -4,7 +4,13 @@
 #include "unicode_string.h"
 #include "utf8.h"
 
-void assert_equals(codepoint_t actual, codepoint_t expected) {
+void assert_int_equals(int actual, int expected) {
+  if (actual != expected) {
+    printf("FAILED: Expected %d but found %d\n", expected, actual);
+  }
+}
+
+void assert_codepoint_equals(codepoint_t actual, codepoint_t expected) {
   if (actual != expected) {
     printf("FAILED: Expected %d but found %d\n", expected, actual);
   }
@@ -79,7 +85,7 @@ void test_decode_all(char *code_points_file) {
       continue;
     }
 
-    assert_equals(unicode_string.codepoints[i++], codepoint);
+    assert_codepoint_equals(unicode_string.codepoints[i++], codepoint);
   }
 
   if (i != unicode_string.size) {
@@ -100,7 +106,46 @@ void test_encode_decode_all() {
     utf8_decode(c_string, &unicode_string);
     free(c_string);
 
-    assert_equals(codepoint, i);
+    assert_codepoint_equals(codepoint, i);
+  }
+}
+
+void test_decode_invalid() {
+  UnicodeString_t unicode_string;
+  // Invalid leading bytes
+  assert_int_equals(utf8_decode("\xF8\x80\x80\x80", &unicode_string), -1);
+  assert_int_equals(utf8_decode("\xF9\x80\x80\x80", &unicode_string), -1);
+  assert_int_equals(utf8_decode("\xFA\x80\x80\x80", &unicode_string), -1);
+  assert_int_equals(utf8_decode("\xFB\x80\x80\x80", &unicode_string), -1);
+  assert_int_equals(utf8_decode("\xFC\x80\x80\x80", &unicode_string), -1);
+  assert_int_equals(utf8_decode("\xFD\x80\x80\x80", &unicode_string), -1);
+  assert_int_equals(utf8_decode("\xFE\x80\x80\x80", &unicode_string), -1);
+  assert_int_equals(utf8_decode("\xFF\x80\x80\x80", &unicode_string), -1);
+
+  // Missing continuation byte in 2-byte code point
+  assert_int_equals(utf8_decode("\xC0\x00", &unicode_string), -1);
+
+  // Missing continuation bytes in 3-byte code point
+  assert_int_equals(utf8_decode("\xE0\x00\x80", &unicode_string), -1);
+  assert_int_equals(utf8_decode("\xE0\x80\x00", &unicode_string), -1);
+
+  // Missing continuation bytes in 4-byte code point
+  assert_int_equals(utf8_decode("\xF0\x00\x80\x80", &unicode_string), -1);
+  assert_int_equals(utf8_decode("\xF0\x08\x00\x80", &unicode_string), -1);
+  assert_int_equals(utf8_decode("\xF0\x08\x80\x00", &unicode_string), -1);
+
+  // Outside range of code points
+  for (codepoint_t i = 0x110000; i < (1 << 21); i++) {
+    char encoded_string[5];
+    sprintf(
+      encoded_string, 
+      "%c%c%c%c", 
+      0xF0 | (i >> 18),
+      0x80 | ((i >> 12) & 0x3F),
+      0x80 | ((i >> 6) & 0x3F),
+      0x80 | (i & 0x3F)
+    );
+    assert_int_equals(utf8_decode(encoded_string, &unicode_string), -1);
   }
 }
 
@@ -115,4 +160,5 @@ int main(int argc, char **argv) {
   test_encode_all(code_points_file);
   test_decode_all(code_points_file);
   test_encode_decode_all();
+  test_decode_invalid();
 }

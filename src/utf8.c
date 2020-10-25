@@ -37,40 +37,42 @@ codepoint_t utf8_decode_codepoint(const char **pointer) {
   codepoint_t codepoint;
   if ((c1 & 0x80) == 0) {
     // ASCII characters < 128
-    codepoint = c1;
-
     (*pointer)++;
+    codepoint = c1;
   } else if ((c1 & 0xE0) == 0xC0) {
     // Two byte sequence
+    (*pointer) += 2;
+
     c2 = bytes[1];
     if (!IS_CONTINUATION_BYTE(c2)) {
-      codepoint = INVALID_CODEPOINT;
+      return INVALID_CODEPOINT;
     }
 
     codepoint = (c1 & 0x1F) << 6;
     codepoint |= (c2 & 0x3F);
 
-    (*pointer) += 2;
   } else if ((c1 & 0xF0) == 0xE0) {
     // Three byte sequence
+    (*pointer) += 3;
+
     c2 = bytes[1];
     c3 = bytes[2];
     if (!IS_CONTINUATION_BYTE(c2) || !IS_CONTINUATION_BYTE(c3)) {
-      codepoint = INVALID_CODEPOINT;
+      return INVALID_CODEPOINT;
     }
 
     codepoint = (c1 & 0x0F) << 12;
     codepoint |= (c2 & 0x3F) << 6;
     codepoint |= (c3 & 0x3F);
-
-    (*pointer) += 3;
   } else if ((c1 & 0xF8) == 0xF0) {
     // Four byte sequence
+    (*pointer) += 4;
+
     c2 = bytes[1];
     c3 = bytes[2];
     c4 = bytes[3];
     if (!IS_CONTINUATION_BYTE(c2) || !IS_CONTINUATION_BYTE(c3) || !IS_CONTINUATION_BYTE(c4)) {
-      codepoint = INVALID_CODEPOINT;
+      return INVALID_CODEPOINT;
     }
 
     codepoint = (c1 & 0x07) << 18;
@@ -79,12 +81,10 @@ codepoint_t utf8_decode_codepoint(const char **pointer) {
     codepoint |= (c4 & 0x3F);
 
     if (codepoint > 0x10FFFF) {
-      codepoint = INVALID_CODEPOINT;
+      return INVALID_CODEPOINT;
     }
-
-    (*pointer) += 4;
   } else {
-    codepoint = INVALID_CODEPOINT;
+    return INVALID_CODEPOINT;
   }
 
   return codepoint;
