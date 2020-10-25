@@ -7,6 +7,8 @@
 
 #define INVALID_CODEPOINT ((codepoint_t)-1)
 
+codepoint_t utf8_decode_codepoint(const char **pointer);
+
 int utf8_decode(const char *bytes, UnicodeString_t *output) {
   // Build up string one codepoint at a time
   UnicodeStringBuilder_t builder;

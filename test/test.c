@@ -3,6 +3,7 @@
 #include <string.h>
 #include "unicode_string.h"
 #include "utf8.h"
+#include "utf16.h"
 
 void assert_int_equals(int actual, int expected) {
   if (actual != expected) {
@@ -41,7 +42,7 @@ char *read_file(FILE *file) {
   return string;
 }
 
-void test_encode_all(char *code_points_file) {
+void test_utf8_encode_all(char *code_points_file) {
   codepoint_t codepoints[0x110000];
   UnicodeString_t unicode_string = { 0, codepoints };
   for (codepoint_t i = 0; i < 0x110000; i++) {
@@ -69,7 +70,7 @@ void test_encode_all(char *code_points_file) {
   free(file_contents);
 }
 
-void test_decode_all(char *code_points_file) {
+void test_utf8_decode_all(char *code_points_file) {
   FILE *file = fopen(code_points_file, "r");
   char *file_contents = read_file(file);
   fclose(file);
@@ -96,7 +97,7 @@ void test_decode_all(char *code_points_file) {
   free(file_contents);
 }
 
-void test_encode_decode_all() {
+void test_utf8_encode_decode_all() {
   char *c_string;
   codepoint_t codepoint;
   UnicodeString_t unicode_string = {1, &codepoint};
@@ -110,7 +111,7 @@ void test_encode_decode_all() {
   }
 }
 
-void test_decode_invalid() {
+void test_utf8_decode_invalid() {
   UnicodeString_t unicode_string;
   // Invalid leading bytes
   assert_int_equals(utf8_decode("\xF8\x80\x80\x80", &unicode_string), -1);
@@ -149,6 +150,20 @@ void test_decode_invalid() {
   }
 }
 
+void test_utf16_encode_decode_all() {
+  char *c_string;
+  codepoint_t codepoint;
+  UnicodeString_t unicode_string = {1, &codepoint};
+  for (codepoint_t i = 0; i <= 0x10FFFF; i++) {
+    codepoint = i;
+    utf16_encode(&unicode_string, &c_string);
+    utf16_decode(c_string, &unicode_string);
+    free(c_string);
+
+    assert_codepoint_equals(codepoint, i);
+  }
+}
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     printf("Usage: test <utf8-file>\n");
@@ -157,8 +172,10 @@ int main(int argc, char **argv) {
 
   char *code_points_file = argv[1];
 
-  test_encode_all(code_points_file);
-  test_decode_all(code_points_file);
-  test_encode_decode_all();
-  test_decode_invalid();
+  test_utf8_encode_all(code_points_file);
+  test_utf8_decode_all(code_points_file);
+  test_utf8_encode_decode_all();
+  test_utf8_decode_invalid();
+
+  test_utf16_encode_decode_all();
 }
