@@ -5,13 +5,16 @@
 
 codepoint_t utf16_decode_codepoint(uint16_t **pointer);
 
-int utf16_decode(const char *bytes, UnicodeString_t *output) {
+int utf16_decode(String_t string, UnicodeString_t *output) {
   // Build up string one codepoint at a time
   UnicodeStringBuilder_t builder;
   unicode_string_builder_init(&builder, INITIAL_BUILDER_CAPACITY);
 
-  while (*bytes != 0) {
-    codepoint_t codepoint = utf16_decode_codepoint((uint16_t **)&bytes);
+  const char *pointer = string.buffer;
+  const char *buffer_end = string.buffer + string.size;
+
+  while (pointer < buffer_end) {
+    codepoint_t codepoint = utf16_decode_codepoint((uint16_t **)&pointer);
     if (codepoint == INVALID_CODEPOINT) {
       unicode_string_builder_destroy(&builder);
       return -1;
@@ -39,48 +42,46 @@ codepoint_t utf16_decode_codepoint(uint16_t **pointer) {
 
     codepoint_t codepoint = c2 - 0xDC00;
     codepoint |= (c1 - 0xD800) << 10;
-
-    if (codepoint > 0x10FFFF) {
-      return INVALID_CODEPOINT;
-    }
+    codepoint += 0x10000;
 
     (*pointer) += 2;
     return codepoint;
+  } else if (IS_LOW_SURROGATE(c1)) {
+    return INVALID_CODEPOINT;
   }
 
   (*pointer)++;
   return c1;
 }
 
-int utf16_encode(UnicodeString_t *string, char **output) {
+int utf16_encode(UnicodeString_t string, String_t *output) {
   // Build up string one byte at a time
-  CStringBuilder_t builder;
-  c_string_builder_init(&builder, string->size);
+  StringBuilder_t builder;
+  string_builder_init(&builder, string.size);
 
-  codepoint_t *codepoints = string->codepoints;
-  for (size_t i = 0; i < string->size; i++) {
-    codepoint_t codepoint = codepoints[i];
+  for (size_t i = 0; i < string.size; i++) {
+    codepoint_t codepoint = string.buffer[i];
     if (codepoint <= 0xFFFF) {
-      c_string_builder_append(&builder, codepoint >> 8);
-      c_string_builder_append(&builder, codepoint);
+      string_builder_append(&builder, codepoint);
+      string_builder_append(&builder, codepoint >> 8);
     } else if (codepoint <= 0x10FFFF){
       codepoint -= 0x10000;
       uint16_t unit1 = (codepoint >> 10) + 0xD800;
       uint16_t unit2 = (codepoint & 0x3FF) + 0xDC00;
 
-      c_string_builder_append(&builder, unit1 >> 8);
-      c_string_builder_append(&builder, unit1);
-      c_string_builder_append(&builder, unit2 >> 8);
-      c_string_builder_append(&builder, unit2);
+      string_builder_append(&builder, unit1);
+      string_builder_append(&builder, unit1 >> 8);
+      string_builder_append(&builder, unit2);
+      string_builder_append(&builder, unit2 >> 8);
     } else {
       // Error if outside range of unicode code points
-      c_string_builder_destroy(&builder);
+      string_builder_destroy(&builder);
       return -1;
     }
   }
 
-  c_string_builder_to_string(&builder, output);
-  c_string_builder_destroy(&builder);
+  string_builder_to_string(&builder, output);
+  string_builder_destroy(&builder);
 
   return 0;
 }

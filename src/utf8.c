@@ -9,13 +9,16 @@
 
 codepoint_t utf8_decode_codepoint(const char **pointer);
 
-int utf8_decode(const char *bytes, UnicodeString_t *output) {
+int utf8_decode(String_t string, UnicodeString_t *output) {
   // Build up string one codepoint at a time
   UnicodeStringBuilder_t builder;
   unicode_string_builder_init(&builder, INITIAL_BUILDER_CAPACITY);
 
-  while (*bytes != 0) {
-    codepoint_t codepoint = utf8_decode_codepoint(&bytes);
+  const char *pointer = string.buffer;
+  const char *buffer_end = string.buffer + string.size;
+
+  while (pointer < buffer_end) {
+    codepoint_t codepoint = utf8_decode_codepoint(&pointer);
     if (codepoint == INVALID_CODEPOINT) {
       unicode_string_builder_destroy(&builder);
       return -1;
@@ -92,37 +95,36 @@ codepoint_t utf8_decode_codepoint(const char **pointer) {
   return codepoint;
 }
 
-int utf8_encode(UnicodeString_t *string, char **output) {
+int utf8_encode(UnicodeString_t string, String_t *output) {
   // Build up string one byte at a time
-  CStringBuilder_t builder;
-  c_string_builder_init(&builder, string->size);
+  StringBuilder_t builder;
+  string_builder_init(&builder, string.size);
 
-  codepoint_t *codepoints = string->codepoints;
-  for (size_t i = 0; i < string->size; i++) {
-    codepoint_t codepoint = codepoints[i];
+  for (size_t i = 0; i < string.size; i++) {
+    codepoint_t codepoint = string.buffer[i];
     if (codepoint < 0x80) {
-      c_string_builder_append(&builder, (char)codepoint);                    // 0xxxxxxx
+      string_builder_append(&builder, (char)codepoint);                    // 0xxxxxxx
     } else if (codepoint <= 0x7FF) {
-      c_string_builder_append(&builder, 0xC0 | (codepoint >> 6));            // 110xxxxx
-      c_string_builder_append(&builder, 0x80 | (codepoint & 0x3F));          // 10xxxxxx
+      string_builder_append(&builder, 0xC0 | (codepoint >> 6));            // 110xxxxx
+      string_builder_append(&builder, 0x80 | (codepoint & 0x3F));          // 10xxxxxx
     } else if (codepoint <= 0xFFFF) {
-      c_string_builder_append(&builder, 0xE0 | (codepoint >> 12));           // 1110xxxx
-      c_string_builder_append(&builder, 0x80 | ((codepoint >> 6) & 0x3F));   // 10xxxxxx
-      c_string_builder_append(&builder, 0x80 | (codepoint & 0x3F));          // 10xxxxxx
+      string_builder_append(&builder, 0xE0 | (codepoint >> 12));           // 1110xxxx
+      string_builder_append(&builder, 0x80 | ((codepoint >> 6) & 0x3F));   // 10xxxxxx
+      string_builder_append(&builder, 0x80 | (codepoint & 0x3F));          // 10xxxxxx
     } else if (codepoint <= 0x10FFFF) {
-      c_string_builder_append(&builder, 0xF0 | (codepoint >> 18));           // 11110xxx
-      c_string_builder_append(&builder, 0x80 | ((codepoint >> 12) & 0x3F));  // 10xxxxxx
-      c_string_builder_append(&builder, 0x80 | ((codepoint >> 6) & 0x3F));   // 10xxxxxx
-      c_string_builder_append(&builder, 0x80 | (codepoint & 0x3F));          // 10xxxxxx
+      string_builder_append(&builder, 0xF0 | (codepoint >> 18));           // 11110xxx
+      string_builder_append(&builder, 0x80 | ((codepoint >> 12) & 0x3F));  // 10xxxxxx
+      string_builder_append(&builder, 0x80 | ((codepoint >> 6) & 0x3F));   // 10xxxxxx
+      string_builder_append(&builder, 0x80 | (codepoint & 0x3F));          // 10xxxxxx
     } else {
       // Error if outside range of unicode code points
-      c_string_builder_destroy(&builder);
+      string_builder_destroy(&builder);
       return -1;
     }
   }
 
-  c_string_builder_to_string(&builder, output);
-  c_string_builder_destroy(&builder);
+  string_builder_to_string(&builder, output);
+  string_builder_destroy(&builder);
 
   return 0;
 }

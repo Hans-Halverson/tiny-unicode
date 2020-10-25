@@ -1,5 +1,8 @@
 #! python3
 
+UTF8_FILE = 'all-utf-8.txt'
+UTF16_FILE = 'all-utf-16.txt'
+
 def in_surrogate_range(codepoint):
   return i >= 0xD800 and i <= 0xDFFF
 
@@ -8,8 +11,9 @@ for i in range(0, 0x110000):
   if not in_surrogate_range(i):
     str += chr(i)
 
-with open('all-utf-8.txt', 'wb') as f:
-  f.write(str.encode('utf-8-'))
+with open(UTF8_FILE, 'wb') as f:
+  f.write(str.encode('utf-8'))
 
-with open('all-utf-16.txt', 'wb') as f:
-  f.write(str.encode('utf-16-be'))
+with open(UTF16_FILE, 'wb') as f:
+  # Exclude byte order marker
+  f.write(str.encode('utf-16')[2:])

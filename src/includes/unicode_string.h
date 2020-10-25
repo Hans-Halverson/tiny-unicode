@@ -3,20 +3,27 @@
 #include <stddef.h>
 #include "common.h"
 
-typedef struct CStringBuilder {
+typedef struct String {
+  size_t size;
+  char *buffer;
+} String_t;
+
+typedef struct StringBuilder {
   size_t size;
   size_t capacity;
   char *buffer;
-} CStringBuilder_t;
+} StringBuilder_t;
 
-void c_string_builder_init(CStringBuilder_t *builder, size_t capacity);
-void c_string_builder_destroy(CStringBuilder_t *builder);
-void c_string_builder_append(CStringBuilder_t *builder, char c);
-void c_string_builder_to_string(CStringBuilder_t *builder, char **string);
+void string_builder_init(StringBuilder_t *builder, size_t capacity);
+void string_builder_destroy(StringBuilder_t *builder);
+void string_builder_append(StringBuilder_t *builder, char c);
+void string_builder_to_string(StringBuilder_t *builder, String_t *string);
+
+void string_destroy(String_t *string);
 
 typedef struct UnicodeString {
   size_t size;
-  codepoint_t *codepoints;
+  codepoint_t *buffer;
 } UnicodeString_t;
 
 typedef struct UnicodeStringBuilder {
@@ -30,4 +37,4 @@ void unicode_string_builder_destroy(UnicodeStringBuilder_t *builder);
 void unicode_string_builder_append(UnicodeStringBuilder_t *builder, codepoint_t codepoint);
 void unicode_string_builder_to_string(UnicodeStringBuilder_t *builder, UnicodeString_t *string);
 
-void unicode_string_destroy(UnicodeString_t *builder);
+void unicode_string_destroy(UnicodeString_t *string);

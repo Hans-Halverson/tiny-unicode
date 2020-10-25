@@ -22,4 +22,6 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run tests
-"$BUILD_DIR"/tests "$ROOT_DIR"/test/all-utf-8.txt
+"$BUILD_DIR"/tests \
+  "$ROOT_DIR"/test/all-utf-8.txt \
+  "$ROOT_DIR"/test/all-utf-16.txt
