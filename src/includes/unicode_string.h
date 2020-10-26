@@ -17,6 +17,7 @@ typedef struct StringBuilder {
 void string_builder_init(StringBuilder_t *builder, size_t capacity);
 void string_builder_destroy(StringBuilder_t *builder);
 void string_builder_append(StringBuilder_t *builder, char c);
+void string_builder_append2(StringBuilder_t *builder, uint16_t c);
 void string_builder_to_string(StringBuilder_t *builder, String_t *string);
 
 void string_destroy(String_t *string);

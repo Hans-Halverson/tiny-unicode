@@ -23,6 +23,16 @@ void string_builder_append(StringBuilder_t *builder, char c) {
   builder->size++;
 }
 
+void string_builder_append2(StringBuilder_t *builder, uint16_t c) {
+  if (builder->size + 1 >= builder->capacity) {
+    builder->buffer = realloc(builder->buffer, builder->capacity * 2);
+    builder->capacity *= 2;
+  }
+
+  *(uint16_t *)(builder->buffer + builder->size) = c;
+  builder->size += 2;
+}
+
 void string_builder_to_string(StringBuilder_t *builder, String_t *string) {
   string->size = builder->size;
   string->buffer = malloc(builder->size);

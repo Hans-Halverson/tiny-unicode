@@ -73,17 +73,14 @@ int utf16_encode(UnicodeString_t string, String_t *output) {
   for (size_t i = 0; i < string.size; i++) {
     codepoint_t codepoint = string.buffer[i];
     if (codepoint <= 0xFFFF) {
-      string_builder_append(&builder, codepoint);
-      string_builder_append(&builder, codepoint >> 8);
+      string_builder_append2(&builder, codepoint);
     } else if (codepoint <= 0x10FFFF){
       codepoint -= 0x10000;
       uint16_t unit1 = (codepoint >> 10) + 0xD800;
       uint16_t unit2 = (codepoint & 0x3FF) + 0xDC00;
 
-      string_builder_append(&builder, unit1);
-      string_builder_append(&builder, unit1 >> 8);
-      string_builder_append(&builder, unit2);
-      string_builder_append(&builder, unit2 >> 8);
+      string_builder_append2(&builder, unit1);
+      string_builder_append2(&builder, unit2);
     } else {
       // Error if outside range of unicode code points
       string_builder_destroy(&builder);
