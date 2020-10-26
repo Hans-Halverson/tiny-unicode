@@ -24,4 +24,5 @@ fi
 # Run tests
 "$BUILD_DIR"/tests \
   "$ROOT_DIR"/test/all-utf-8.txt \
-  "$ROOT_DIR"/test/all-utf-16.txt
+  "$ROOT_DIR"/test/all-utf-16.txt \
+  "$ROOT_DIR"/test/all-utf-32.txt

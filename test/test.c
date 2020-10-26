@@ -237,6 +237,63 @@ void test_utf16_decode_invalid() {
   }
 }
 
+
+void test_utf32_encode_all(const char *filename) {
+  codepoint_t codepoints[0x110000];
+  UnicodeString_t unicode_string = { 0, codepoints };
+  for (codepoint_t i = 0; i < 0x110000; i++) {
+    if (IN_SURROGATE_RANGE(i)) {
+      continue;
+    }
+
+    codepoints[unicode_string.size++] = i;
+  }
+
+  String_t string;
+  if (utf32_encode(unicode_string, &string) != 0) {
+    fail("encode all utf32_encode failed");
+  }
+
+  FILE *file = fopen(filename, "r");
+  String_t file_contents = read_file(file);
+  fclose(file);
+
+  if (string.size != file_contents.size ||
+      memcmp(string.buffer, file_contents.buffer, string.size) != 0) {
+    fail("utf-32 encode all strings differ");
+  }
+
+  string_destroy(&string);
+  string_destroy(&file_contents);
+}
+
+void test_utf32_decode_all(const char *filename) {
+  FILE *file = fopen(filename, "r");
+  String_t file_contents = read_file(file);
+  fclose(file);
+
+  UnicodeString_t unicode_string;
+  if (utf32_decode(file_contents, &unicode_string) != 0) {
+    fail("decode all utf32_decode failed");
+  }
+
+  size_t i = 0;
+  for (codepoint_t codepoint = 0; codepoint <= 0x10FFFF; codepoint++) {
+    if (IN_SURROGATE_RANGE(codepoint)) {
+      continue;
+    }
+
+    assert_codepoint_equals(unicode_string.buffer[i++], codepoint);
+  }
+
+  if (i != unicode_string.size) {
+    fail("utf-32 decode all string lengths differ");
+  }
+
+  unicode_string_destroy(&unicode_string);
+  string_destroy(&file_contents);
+}
+
 void test_utf32_encode_decode_all() {
   String_t string;
   codepoint_t codepoint;
@@ -251,14 +308,27 @@ void test_utf32_encode_decode_all() {
   }
 }
 
+void test_utf32_decode_invalid() {
+  UnicodeString_t unicode_string;
+  // Outside range of code points, both low and high ranges
+  for (codepoint_t i = 0x110000; i < 0x1FFFFF; i++) {
+    assert_int_equals(utf32_decode((String_t){4, (char *)&i}, &unicode_string), -1);
+  }
+
+  for (codepoint_t i = (UINT32_MAX - 0x110000); i != 0; i++) {
+    assert_int_equals(utf32_decode((String_t){4, (char *)&i}, &unicode_string), -1);
+  }
+}
+
 int main(int argc, char **argv) {
-  if (argc != 3) {
-    printf("Usage: test <utf8-file> <utf16-file>\n");
+  if (argc != 4) {
+    printf("Usage: test <utf8-file> <utf16-file> <utf32-file>\n");
     exit(1);
   }
 
   char *utf8_file = argv[1];
   char *utf16_file = argv[2];
+  char *utf32_file = argv[3];
 
   test_utf8_encode_all(utf8_file);
   test_utf8_decode_all(utf8_file);
@@ -270,5 +340,8 @@ int main(int argc, char **argv) {
   test_utf16_encode_decode_all();
   test_utf16_decode_invalid();
 
+  test_utf32_encode_all(utf32_file);
+  test_utf32_decode_all(utf32_file);
   test_utf32_encode_decode_all();
+  test_utf32_decode_invalid();
 }
