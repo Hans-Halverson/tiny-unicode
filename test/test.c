@@ -6,6 +6,10 @@
 #include "utf16.h"
 #include "utf32.h"
 
+/////////////////////////////////////////////////
+///                  Utilities
+/////////////////////////////////////////////////
+
 void assert_int_equals(int actual, int expected) {
   if (actual != expected) {
     printf("FAILED: Expected %d but found %d\n", expected, actual);
@@ -42,6 +46,10 @@ String_t read_file(FILE *file) {
 
   return string;
 }
+
+/////////////////////////////////////////////////
+///                  UTF-8
+/////////////////////////////////////////////////
 
 void test_utf8_encode_all(const char *filename) {
   codepoint_t codepoints[0x110000];
@@ -116,6 +124,7 @@ void test_utf8_encode_decode_all() {
 void test_utf8_decode_invalid() {
   UnicodeString_t unicode_string;
   // Invalid leading bytes
+  assert_int_equals(utf8_decode((String_t){4, "\x80\x80\x80\x80"}, &unicode_string), -1);
   assert_int_equals(utf8_decode((String_t){4, "\xF8\x80\x80\x80"}, &unicode_string), -1);
   assert_int_equals(utf8_decode((String_t){4, "\xF9\x80\x80\x80"}, &unicode_string), -1);
   assert_int_equals(utf8_decode((String_t){4, "\xFA\x80\x80\x80"}, &unicode_string), -1);
@@ -151,6 +160,26 @@ void test_utf8_decode_invalid() {
     assert_int_equals(utf8_decode((String_t){5, encoded_string}, &unicode_string), -1);
   }
 }
+
+void test_utf8_decode_truncated() {
+  UnicodeString_t unicode_string;
+
+  // Empty string is valid
+  assert_int_equals(utf8_decode((String_t){0, ""}, &unicode_string), 0);
+  assert_int_equals(unicode_string.size, 0);
+
+  // Truncated strings
+  assert_int_equals(utf8_decode((String_t){1, "\xC0"}, &unicode_string), -1);
+  assert_int_equals(utf8_decode((String_t){1, "\xE0"}, &unicode_string), -1);
+  assert_int_equals(utf8_decode((String_t){2, "\xE0\x80"}, &unicode_string), -1);
+  assert_int_equals(utf8_decode((String_t){1, "\xF0"}, &unicode_string), -1);
+  assert_int_equals(utf8_decode((String_t){2, "\xF0\x80"}, &unicode_string), -1);
+  assert_int_equals(utf8_decode((String_t){3, "\xF0\x80\x80"}, &unicode_string), -1);
+}
+
+/////////////////////////////////////////////////
+///                  UTF-16
+/////////////////////////////////////////////////
 
 void test_utf16_encode_all(const char *filename) {
   codepoint_t codepoints[0x110000];
@@ -237,6 +266,23 @@ void test_utf16_decode_invalid() {
   }
 }
 
+void test_utf16_decode_truncated() {
+  UnicodeString_t unicode_string;
+
+  // Empty string is valid
+  assert_int_equals(utf16_decode((String_t){0, ""}, &unicode_string), 0);
+  assert_int_equals(unicode_string.size, 0);
+
+  // Truncated strings
+  assert_int_equals(utf16_decode((String_t){1, "\xD8"}, &unicode_string), -1);
+  assert_int_equals(utf16_decode((String_t){2, "\x00\xD8"}, &unicode_string), -1);
+  assert_int_equals(utf16_decode((String_t){4, "\x00\xD8\x00"}, &unicode_string), -1);
+  assert_int_equals(utf16_decode((String_t){5, "\x00\x01\x00\x01\x00"}, &unicode_string), -1);
+}
+
+/////////////////////////////////////////////////
+///                  UTF-32
+/////////////////////////////////////////////////
 
 void test_utf32_encode_all(const char *filename) {
   codepoint_t codepoints[0x110000];
@@ -320,6 +366,20 @@ void test_utf32_decode_invalid() {
   }
 }
 
+void test_utf32_decode_truncated() {
+  UnicodeString_t unicode_string;
+
+  // Empty string is valid
+  assert_int_equals(utf32_decode((String_t){0, ""}, &unicode_string), 0);
+  assert_int_equals(unicode_string.size, 0);
+
+  // Truncated strings
+  assert_int_equals(utf32_decode((String_t){1, "\x01"}, &unicode_string), -1);
+  assert_int_equals(utf32_decode((String_t){2, "\x00\x01"}, &unicode_string), -1);
+  assert_int_equals(utf32_decode((String_t){3, "\x00\x00\x01"}, &unicode_string), -1);
+  assert_int_equals(utf32_decode((String_t){5, "\x00\x00\x00\x01\x01"}, &unicode_string), -1);
+}
+
 int main(int argc, char **argv) {
   if (argc != 4) {
     printf("Usage: test <utf8-file> <utf16-file> <utf32-file>\n");
@@ -334,14 +394,17 @@ int main(int argc, char **argv) {
   test_utf8_decode_all(utf8_file);
   test_utf8_encode_decode_all();
   test_utf8_decode_invalid();
+  test_utf8_decode_truncated();
 
   test_utf16_encode_all(utf16_file);
   test_utf16_decode_all(utf16_file);
   test_utf16_encode_decode_all();
   test_utf16_decode_invalid();
+  test_utf16_decode_truncated();
 
   test_utf32_encode_all(utf32_file);
   test_utf32_decode_all(utf32_file);
   test_utf32_encode_decode_all();
   test_utf32_decode_invalid();
+  test_utf32_decode_truncated();
 }

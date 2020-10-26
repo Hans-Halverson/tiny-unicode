@@ -7,7 +7,7 @@
 
 #define INVALID_CODEPOINT ((codepoint_t)-1)
 
-codepoint_t utf8_decode_codepoint(const char **pointer);
+codepoint_t utf8_decode_codepoint(const char **pointer, const char *buffer_end);
 
 int utf8_decode(String_t string, UnicodeString_t *output) {
   // Build up string one codepoint at a time
@@ -18,13 +18,19 @@ int utf8_decode(String_t string, UnicodeString_t *output) {
   const char *buffer_end = string.buffer + string.size;
 
   while (pointer < buffer_end) {
-    codepoint_t codepoint = utf8_decode_codepoint(&pointer);
+    codepoint_t codepoint = utf8_decode_codepoint(&pointer, buffer_end);
     if (codepoint == INVALID_CODEPOINT) {
       unicode_string_builder_destroy(&builder);
       return -1;
     }
 
     unicode_string_builder_append(&builder, codepoint);
+  }
+
+  // Check if there are dangling characters left in buffer
+  if (pointer != buffer_end) {
+    unicode_string_builder_destroy(&builder);
+    return -1;
   }
 
   // Create unicode string and free string builder
@@ -34,7 +40,7 @@ int utf8_decode(String_t string, UnicodeString_t *output) {
   return 0;
 }
 
-codepoint_t utf8_decode_codepoint(const char **pointer) {
+codepoint_t utf8_decode_codepoint(const char **pointer, const char *buffer_end) {
   const char *bytes = *pointer;
   char c1 = *bytes;
   char c2, c3, c4;
@@ -44,7 +50,7 @@ codepoint_t utf8_decode_codepoint(const char **pointer) {
     // ASCII characters < 128
     (*pointer)++;
     codepoint = c1;
-  } else if ((c1 & 0xE0) == 0xC0) {
+  } else if ((c1 & 0xE0) == 0xC0 && bytes + 1 < buffer_end) {
     // Two byte sequence
     (*pointer) += 2;
 
@@ -56,7 +62,7 @@ codepoint_t utf8_decode_codepoint(const char **pointer) {
     codepoint = (c1 & 0x1F) << 6;
     codepoint |= (c2 & 0x3F);
 
-  } else if ((c1 & 0xF0) == 0xE0) {
+  } else if ((c1 & 0xF0) == 0xE0 && bytes + 2 < buffer_end) {
     // Three byte sequence
     (*pointer) += 3;
 
@@ -69,7 +75,7 @@ codepoint_t utf8_decode_codepoint(const char **pointer) {
     codepoint = (c1 & 0x0F) << 12;
     codepoint |= (c2 & 0x3F) << 6;
     codepoint |= (c3 & 0x3F);
-  } else if ((c1 & 0xF8) == 0xF0) {
+  } else if ((c1 & 0xF8) == 0xF0 && bytes + 3 < buffer_end) {
     // Four byte sequence
     (*pointer) += 4;
 

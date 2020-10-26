@@ -6,8 +6,13 @@
 #define INVALID_CODEPOINT ((codepoint_t)-1)
 
 int utf32_decode(String_t string, UnicodeString_t *output) {
+  // Check for valid string length
+  if (string.size % 4 != 0) {
+    return -1;
+  }
+
   // No need for UnicodeStringBuilder as we know size of buffer
-  codepoint_t *buffer = malloc(string.size * 4);
+  codepoint_t *buffer = malloc(string.size);
 
   for (size_t i = 0; i < string.size / 4; i++) {
     codepoint_t codepoint = ((uint32_t *)string.buffer)[i];
