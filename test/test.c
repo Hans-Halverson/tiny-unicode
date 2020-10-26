@@ -4,6 +4,7 @@
 #include "unicode_string.h"
 #include "utf8.h"
 #include "utf16.h"
+#include "utf32.h"
 
 void assert_int_equals(int actual, int expected) {
   if (actual != expected) {
@@ -236,6 +237,20 @@ void test_utf16_decode_invalid() {
   }
 }
 
+void test_utf32_encode_decode_all() {
+  String_t string;
+  codepoint_t codepoint;
+  UnicodeString_t unicode_string = {1, &codepoint};
+  for (codepoint_t i = 0; i <= 0x10FFFF; i++) {
+    codepoint = i;
+    utf32_encode(unicode_string, &string);
+    utf32_decode(string, &unicode_string);
+    string_destroy(&string);
+
+    assert_codepoint_equals(codepoint, i);
+  }
+}
+
 int main(int argc, char **argv) {
   if (argc != 3) {
     printf("Usage: test <utf8-file> <utf16-file>\n");
@@ -254,4 +269,6 @@ int main(int argc, char **argv) {
   test_utf16_decode_all(utf16_file);
   test_utf16_encode_decode_all();
   test_utf16_decode_invalid();
+
+  test_utf32_encode_decode_all();
 }

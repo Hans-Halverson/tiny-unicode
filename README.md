@@ -1,6 +1,9 @@
 # tiny-unicode
 
-A small unicode encoding and decoding library. Supports encoding and encoding UTF-8 and UTF-16 strings.
+A small unicode encoding and decoding library. Supports encoding and encoding the following formats:
+- UTF-8
+- UTF-16
+- UTF-32
 
 ## Building and Testing
 

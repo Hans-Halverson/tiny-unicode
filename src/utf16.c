@@ -57,7 +57,7 @@ codepoint_t utf16_decode_codepoint(uint16_t **pointer) {
 int utf16_encode(UnicodeString_t string, String_t *output) {
   // Build up string one byte at a time
   StringBuilder_t builder;
-  string_builder_init(&builder, string.size);
+  string_builder_init(&builder, string.size * 2);
 
   for (size_t i = 0; i < string.size; i++) {
     codepoint_t codepoint = string.buffer[i];
