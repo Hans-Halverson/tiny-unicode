@@ -1,2 +1,5 @@
-script: ./scripts/build prod
-script: ./scripts/test
+os: linux
+languange: c
+script:
+  - ./scripts/build prod
+  - ./scripts/test

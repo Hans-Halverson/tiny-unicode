@@ -1,4 +1,5 @@
 # tiny-unicode
+[![Build Status](https://travis-ci.org/Hans-Halverson/tiny-unicode.svg?branch=master)](https://travis-ci.org/Hans-Halverson/tiny-unicode)
 
 A small unicode encoding and decoding library. Supports encoding and encoding the following formats:
 - UTF-8
