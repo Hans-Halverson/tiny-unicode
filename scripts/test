@@ -11,7 +11,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Build test suite
-clang -Wall -Wextra \
+clang -v -Wall -Wextra \
   -o "$BUILD_DIR"/tests \
   -I"$ROOT_DIR"/src/includes \
   -L"$BUILD_DIR" -ltinyunicode-asan-ubsan \
