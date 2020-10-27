@@ -1,5 +1,7 @@
 os: linux
-languange: c
+language: c
+install:
+  - sudo apt-get install zsh
 script:
-  - ./scripts/build prod
-  - ./scripts/test
+  - zsh ./scripts/build prod
+  - zsh ./scripts/test
