@@ -1,5 +1,6 @@
 os: linux
 language: c
+compiler: clang
 install:
   - sudo apt-get install zsh
 script:
